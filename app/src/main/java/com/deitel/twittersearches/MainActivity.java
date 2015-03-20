@@ -8,6 +8,8 @@ import java.util.Collections;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,8 +29,11 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 public class MainActivity extends Activity
+        implements FirstFragment.OnFragmentInteractionListener
 {
-   // name of SharedPreferences XML file that stores the saved searches 
+
+
+    // name of SharedPreferences XML file that stores the saved searches
    private static final String SEARCHES = "searches";
    
    private EditText queryEditText; // EditText where user enters a query
@@ -36,8 +41,20 @@ public class MainActivity extends Activity
    private SharedPreferences savedSearches; // user's favorite searches
    private ArrayList<String> tags; // list of tags for saved searches
    private ArrayAdapter<String> adapter; // binds tags to ListView
-   
+
    // SOME Changes _ called when MainActivity is first created
+
+    @Override
+    public void onBackPressed(){
+
+        FragmentManager fg = getFragmentManager();
+        if(fg.getBackStackEntryCount()>0){
+            fg.popBackStack();
+        }else{
+            super.onBackPressed();
+        }
+    }
+
    @Override
    protected void onCreate(Bundle savedInstanceState)
    {
@@ -58,7 +75,9 @@ public class MainActivity extends Activity
       // create ArrayAdapter and use it to bind tags to the ListView
       adapter = new ArrayAdapter<String>(this, R.layout.list_item, tags);
       // MOVE to ListFragment _ setListAdapter(adapter);
-      
+       getFragmentManager().beginTransaction()
+               .add(R.id.fragment_holder,new FirstFragment())
+               .commit();
       // register listener to save a new or edited search 
       ImageButton saveButton = 
          (ImageButton) findViewById(R.id.saveButton);
@@ -66,7 +85,6 @@ public class MainActivity extends Activity
 
       // MOVE to ListFragment _ register listener that searches Twitter when user touches a tag
       //getListView().setOnItemClickListener(itemClickListener);
-      
       // MOVE to ListFragment _  set listener that allows user to delete or edit a search
       //getListView().setOnItemLongClickListener(itemLongClickListener);
    } // end method onCreate
@@ -120,6 +138,7 @@ public class MainActivity extends Activity
       // if tag is new, add to and sort tags, then display updated list
       if (!tags.contains(tag))
       {
+
          tags.add(tag); // add new tag
          Collections.sort(tags, String.CASE_INSENSITIVE_ORDER);
          adapter.notifyDataSetChanged(); // rebind tags to ListView
@@ -275,6 +294,19 @@ public class MainActivity extends Activity
    // ADDED to set up the ListFragment
    public ArrayAdapter<String> getAdapter(){return adapter;}
 
+    @Override
+    public void sendUriToFragment2(String tag) {
+
+             String urlString = getString(R.string.searchURL) +
+                   Uri.encode(savedSearches.getString(tag, ""), "UTF-8");
+
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_holder,SecondFragment.newInstance(urlString))
+                    .addToBackStack(null)
+                    .commit();
+
+
+    }
 } // end class MainActivity
 
 
